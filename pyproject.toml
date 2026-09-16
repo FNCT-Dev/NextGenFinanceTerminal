@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nextgen-finance-terminal"
+version = "0.1.0"
+description = "A read-only, BYOK desktop multi-asset financial data terminal."
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+license = { text = "MIT" }
+authors = [{ name = "Project Author" }]
+dependencies = [
+  "pydantic>=2.10,<3",
+  "pydantic-settings>=2.7,<3",
+  "python-dotenv>=1.0,<2",
+  "httpx>=0.27,<1",
+  "tenacity>=9,<10",
+  "cachetools>=5.5,<7",
+]
+
+[project.optional-dependencies]
+ui = ["PySide6>=6.8,<7", "PySide6-Fluent-Widgets>=1.7,<2", "qasync>=0.27,<1", "pyqtgraph>=0.13,<1", "numpy>=2,<3"]
+security = ["argon2-cffi>=23.1,<26", "keyring>=25,<27"]
+dev = ["pytest>=8.3,<9", "pytest-asyncio>=0.24,<1", "respx>=0.22,<1", "ruff>=0.9,<1", "mypy>=1.14,<2"]
+
+[project.scripts]
+nextgen-terminal = "terminal.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/terminal"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"src/terminal/ui/assets" = "terminal/ui/assets"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["terminal"]
+
+[[tool.mypy.overrides]]
+module = ["qfluentwidgets"]
+ignore_missing_imports = true

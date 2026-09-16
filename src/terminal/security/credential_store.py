@@ -1,0 +1,9 @@
+from typing import Protocol
+
+
+class CredentialStore(Protocol):
+    """OS keyring boundary. Never persist GUI credentials in regular config."""
+
+    def get(self, provider: str, account: str = "default") -> str | None: ...
+    def set(self, provider: str, secret: str, account: str = "default") -> None: ...
+    def delete(self, provider: str, account: str = "default") -> None: ...

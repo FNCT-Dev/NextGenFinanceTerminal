@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv-verify/
+dist/
+build/
+*.sqlite
+*.db
+*.csv
+*.parquet
+*.log
+README.md
