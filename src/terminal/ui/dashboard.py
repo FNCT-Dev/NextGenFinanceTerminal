@@ -1,13 +1,15 @@
+# ruff: noqa: E501
+
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QStackedWidget, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QGridLayout, QLabel, QStackedWidget, QVBoxLayout, QWidget
 from qfluentwidgets import SubtitleLabel, TitleLabel
 
 from terminal.core.freshness import DataFreshness
 from terminal.core.models import Candle
 from terminal.ui.charts import MarketChartPanel
-from terminal.ui.theme import SPACING_MEDIUM
+from terminal.ui.theme import SPACING_LARGE, SPACING_MEDIUM, SPACING_SMALL
 
 
 class DashboardState(StrEnum):
@@ -17,27 +19,47 @@ class DashboardState(StrEnum):
     ERROR = "error"
 
 
+class MetricCard(QWidget):
+    def __init__(self, title: str, value: str, change: str) -> None:
+        super().__init__()
+        self.setObjectName("metricCard")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(SPACING_MEDIUM, SPACING_MEDIUM, SPACING_MEDIUM, SPACING_MEDIUM)
+        title_label = QLabel(title)
+        title_label.setObjectName("muted")
+        change_label = QLabel(change)
+        change_label.setStyleSheet("color: #4ee0b1; font-weight: 600;")
+        layout.addWidget(title_label)
+        layout.addSpacing(SPACING_SMALL)
+        layout.addWidget(TitleLabel(value))
+        layout.addWidget(change_label)
+
+
 class DashboardPage(QWidget):
-    """Dashboard shell with explicit data lifecycle states."""
+    """Dashboard with explicit data states and a Glacial market workspace."""
 
     def __init__(self) -> None:
         super().__init__()
         self._pages = QStackedWidget()
         self._state_pages = {
             DashboardState.LOADING: self._message_page(
-                "로딩 중", "시장 데이터를 불러오고 있습니다."
+                "\ub85c\ub529 \uc911",
+                "\uc2dc\uc7a5 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uace0 \uc788\uc2b5\ub2c8\ub2e4.",
             ),
             DashboardState.EMPTY: self._message_page(
-                "표시할 데이터 없음", "활성화된 데이터 제공자가 없습니다."
+                "\ud45c\uc2dc\ud560 \ub370\uc774\ud130 \uc5c6\uc74c",
+                "\ud65c\uc131\ud654\ub41c \ub370\uc774\ud130 \uc81c\uacf5\uc790\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.",
             ),
             DashboardState.ERROR: self._message_page(
-                "데이터 오류", "시장 데이터를 불러오지 못했습니다."
+                "\ub370\uc774\ud130 \uc624\ub958",
+                "\uc2dc\uc7a5 \ub370\uc774\ud130\ub97c \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.",
             ),
-            DashboardState.READY: self._synthetic_page(),
+            DashboardState.READY: self._market_workspace(),
         }
         for state in DashboardState:
             self._pages.addWidget(self._state_pages[state])
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(SPACING_LARGE, SPACING_LARGE, SPACING_LARGE, SPACING_LARGE)
         layout.addWidget(self._pages)
         self.show_data()
 
@@ -59,38 +81,45 @@ class DashboardPage(QWidget):
     @staticmethod
     def _message_page(title: str, message: str) -> QWidget:
         page = QWidget()
+        page.setObjectName("surface")
         layout = QVBoxLayout(page)
+        layout.setContentsMargins(SPACING_LARGE, SPACING_LARGE, SPACING_LARGE, SPACING_LARGE)
         layout.addStretch()
         layout.addWidget(TitleLabel(title))
-        layout.addWidget(SubtitleLabel(message))
+        text = SubtitleLabel(message)
+        text.setObjectName("muted")
+        layout.addWidget(text)
         layout.addStretch()
         return page
 
-    def _synthetic_page(self) -> QWidget:
+    def _market_workspace(self) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.addWidget(TitleLabel("시장 대시보드"))
-        layout.addWidget(SubtitleLabel("합성 데이터 · 과거 데이터 · 제공자: synthetic"))
-        cards = QHBoxLayout()
+        layout.setSpacing(SPACING_MEDIUM)
+        layout.addWidget(TitleLabel("\uc2dc\uc7a5 \ub300\uc2dc\ubcf4\ub4dc"))
+        summary = SubtitleLabel(
+            "Synthetic \ub370\uc774\ud130 \uae30\ubc18 \uc2dc\uc5f0 \u00b7 HISTORICAL \ub77c\ubca8\uc740 \uc2e4\uc2dc\uac04 \uc2dc\uc138\uac00 \uc544\ub2d9\ub2c8\ub2e4."
+        )
+        summary.setObjectName("muted")
+        layout.addWidget(summary)
+        cards = QGridLayout()
         cards.setSpacing(SPACING_MEDIUM)
-        for title, value in (
-            ("KOSPI", "2,650.00"),
-            ("S&P 500", "5,100.00"),
-            ("USD/KRW", "1,350.00"),
+        for column, card in enumerate(
+            (
+                MetricCard("KOSPI", "2,650.00", "+0.84%"),
+                MetricCard("S&P 500", "5,100.00", "+0.42%"),
+                MetricCard("USD/KRW", "1,350.00", "-0.16%"),
+            )
         ):
-            card = QWidget()
-            card_layout = QVBoxLayout(card)
-            card_layout.addWidget(QLabel(title))
-            card_layout.addWidget(TitleLabel(value))
-            cards.addWidget(card)
+            cards.addWidget(card, 0, column)
         layout.addLayout(cards)
         self._chart = MarketChartPanel()
-        self._chart.setMinimumHeight(280)
+        self._chart.setObjectName("chartPanel")
+        self._chart.setMinimumHeight(330)
         self._chart.symbol_changed.connect(self._refresh_chart)
         self._chart.timeframe_changed.connect(self._refresh_chart)
         self._refresh_chart()
-        layout.addWidget(self._chart)
-        layout.addStretch()
+        layout.addWidget(self._chart, 1)
         return page
 
     def _refresh_chart(self) -> None:

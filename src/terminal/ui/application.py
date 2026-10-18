@@ -14,7 +14,7 @@ from terminal.security.pin_service import PinService
 from terminal.ui.lock_screen import LockScreen
 from terminal.ui.main_window import TerminalWindow
 from terminal.ui.onboarding_wizard import OnboardingWizard
-from terminal.ui.theme import DARK_COLORS
+from terminal.ui.theme import colors_for, glacial_stylesheet
 
 
 def state_file() -> Path:
@@ -36,27 +36,26 @@ def _system_theme(app: QApplication) -> Theme:
                 return Theme.LIGHT if apps_use_light_theme else Theme.DARK
         except OSError:
             return (
-                Theme.DARK
-                if app.styleHints().colorScheme() is Qt.ColorScheme.Dark
-                else Theme.LIGHT
+                Theme.DARK if app.styleHints().colorScheme() is Qt.ColorScheme.Dark else Theme.LIGHT
             )
     return Theme.DARK if app.styleHints().colorScheme() is Qt.ColorScheme.Dark else Theme.LIGHT
 
 
 def _apply_palette(app: QApplication, theme: Theme) -> None:
-    """Give regular Qt widgets the same colors as the Fluent theme."""
+    """Give Fluent and standard Qt widgets the same Glacial palette."""
     palette = QPalette()
-    if theme is Theme.DARK:
-        palette.setColor(QPalette.ColorRole.Window, QColor(DARK_COLORS.background))
-        palette.setColor(QPalette.ColorRole.WindowText, QColor(DARK_COLORS.text))
-        palette.setColor(QPalette.ColorRole.Base, QColor(DARK_COLORS.surface))
-        palette.setColor(QPalette.ColorRole.AlternateBase, QColor("#2a2a2a"))
-        palette.setColor(QPalette.ColorRole.Text, QColor(DARK_COLORS.text))
-        palette.setColor(QPalette.ColorRole.Button, QColor("#2d2d2d"))
-        palette.setColor(QPalette.ColorRole.ButtonText, QColor(DARK_COLORS.text))
-        palette.setColor(QPalette.ColorRole.Highlight, QColor("#0078d4"))
-        palette.setColor(QPalette.ColorRole.HighlightedText, QColor("#ffffff"))
+    colors = colors_for(theme is Theme.DARK)
+    palette.setColor(QPalette.ColorRole.Window, QColor(colors.background))
+    palette.setColor(QPalette.ColorRole.WindowText, QColor(colors.text))
+    palette.setColor(QPalette.ColorRole.Base, QColor(colors.surface))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor(colors.surface_elevated))
+    palette.setColor(QPalette.ColorRole.Text, QColor(colors.text))
+    palette.setColor(QPalette.ColorRole.Button, QColor(colors.surface_elevated))
+    palette.setColor(QPalette.ColorRole.ButtonText, QColor(colors.text))
+    palette.setColor(QPalette.ColorRole.Highlight, QColor(colors.accent))
+    palette.setColor(QPalette.ColorRole.HighlightedText, QColor(colors.background))
     app.setPalette(palette)
+    app.setStyleSheet(glacial_stylesheet(theme is Theme.DARK))
 
 
 def main() -> int:
@@ -86,9 +85,7 @@ def main() -> int:
             controller.save(stored)
             open_terminal()
 
-        wizard = OnboardingWizard(
-            pin_service, credential_store, complete, dark=theme is Theme.DARK
-        )
+        wizard = OnboardingWizard(pin_service, credential_store, complete, dark=theme is Theme.DARK)
         wizard.show()
         app.wizard = wizard  # type: ignore[attr-defined]
     else:
