@@ -1,0 +1,34 @@
+# Optional development workbench; not required by the application at runtime.
+# Build, distribution, Windows executable packaging
+build
+hatchling>=1.27
+setuptools
+wheel
+twine
+pyinstaller
+# GUI testing, coverage, debugging, and type stubs
+pytest-qt
+pytest-cov
+debugpy
+types-cachetools
+# Financial data analysis, interchange, and exploratory notebooks
+pandas
+scipy
+matplotlib
+pyarrow
+openpyxl
+jupyterlab
+ipykernel
+# Future HTTP/streaming adapters and document parsing
+aiohttp
+websockets
+requests
+lxml
+beautifulsoup4
+Pillow
+platformdirs
+# SDKs for the providers explicitly planned in THIRD_PARTY_DATA.md
+alpaca-py
+tiingo
+exchange-calendars
+pandas-datareader
